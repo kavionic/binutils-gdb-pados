@@ -3139,6 +3139,24 @@ classify_name (struct parser_state *par_state, const struct block *block,
 
   if (bsym.symbol && bsym.symbol->loc_class () == LOC_BLOCK)
     {
+      /* In a static member function there is no 'this' object, so a
+	 constructor can be found as a symbol instead of a field of 'this'.
+	 Prefer the class type for an unquoted name in this case, just as
+	 in the field-of-this case below.  */
+      if (par_state->language ()->la_language == language_cplus
+	  && !is_quoted_name && !is_after_structop
+	  && is_constructor_name (bsym.symbol->linkage_name ()))
+	{
+	  block_symbol type_sym
+	    = lookup_symbol (copy.c_str (), block, SEARCH_STRUCT_DOMAIN,
+			     nullptr);
+	  if (type_sym.symbol != nullptr)
+	    {
+	      yylval.tsym.type = type_sym.symbol->type ();
+	      return TYPENAME;
+	    }
+	}
+
       yylval.ssym.sym = bsym;
       yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
       return BLOCKNAME;

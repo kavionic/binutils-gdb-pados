@@ -60,4 +60,18 @@ mi_gdb_test "-data-evaluate-expression \"$path\"" \
     "\\^done,value=\"\{a = 5\}\"" \
     "-data-evaluate-expression $path"
 
+# In a static member function, an unqualified class name must refer to
+# the type rather than its constructor when parsing a pointer cast.
+mi_runto_helper C::staticTestLocation continue
+
+mi_create_varobj "var2" "\"((C *)object)->a\"" \
+    "create member var through a cast in a static member function"
+mi_gdb_test "-var-evaluate-expression var2" \
+    "\\^done,value=\"5\"" \
+    "evaluate member var through a cast in a static member function"
+
+mi_gdb_test "-data-evaluate-expression \"((class C *)object)->a\"" \
+    "\\^done,value=\"5\"" \
+    "evaluate member through an elaborated class name"
+
 mi_gdb_exit
