@@ -800,6 +800,7 @@ ALL_TARGET_OBS = \
 	arm-netbsd-tdep.o \
 	arm-none-tdep.o \
 	arm-obsd-tdep.o \
+	arm-pados-tdep.o \
 	arm-pikeos-tdep.o \
 	arm-tdep.o \
 	arm-wince-tdep.o \
@@ -1824,6 +1825,7 @@ ALLDEPFILES = \
 	arm-netbsd-tdep.c \
 	arm-none-tdep.c \
 	arm-obsd-tdep.c \
+	arm-pados-tdep.c \
 	arm-tdep.c \
 	avr-tdep.c \
 	bfin-linux-tdep.c \
