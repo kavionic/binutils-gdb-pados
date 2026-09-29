@@ -3,6 +3,12 @@
 #include <string.h>
 #include <stdio.h>
 
+// Ensure that the CU has namespace information for C++ scope lookup.
+namespace N
+{
+  int value = 2;
+}
+
 class A
 {
 	public:
@@ -20,6 +26,10 @@ class C : public A
 		{
 			z = 1;
 		};
+		static void staticTestLocation(C *object)
+		{
+			object->z = N::value;
+		};
 		int z;
 };
 
@@ -27,5 +37,6 @@ int main()
 {
 	C c;
 	c.testLocation();
+	C::staticTestLocation(&c);
 	return 0;
 }
