@@ -187,9 +187,9 @@ arm_none_iterate_over_regset_sections (struct gdbarch *gdbarch,
 	&arm_none_vfpregset, "VFP floating-point", cb_data);
 }
 
-/* Initialize ARM bare-metal ABI info.  */
+/* See arm-tdep.h.  */
 
-static void
+void
 arm_none_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
 #ifdef HAVE_ELF

@@ -319,6 +319,10 @@ extern void
 				       void *cb_data,
 				       const struct regcache *regcache);
 
+/* Initialize ARM bare-metal ABI info, including core-file support.  */
+extern void arm_none_init_abi (struct gdbarch_info info,
+			       struct gdbarch *gdbarch);
+
 /* Get the correct Arm target description with given FP hardware type.  */
 const target_desc *arm_read_description (arm_fp_type fp_type, bool tls);
 
