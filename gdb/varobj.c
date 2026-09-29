@@ -759,12 +759,35 @@ varobj_get_num_children (struct varobj *var)
   return var->num_children >= 0 ? var->num_children : 0;
 }
 
+/* Select the thread owning a fixed variable object.  Floating variable
+   objects are evaluated in the currently selected thread.  The caller must
+   restore the previous thread after accessing the variable's value.  */
+
+static void
+select_varobj_thread (const struct varobj *var)
+{
+  int thread_id = varobj_get_thread_id (var);
+
+  if (!varobj_floating_p (var) && thread_id > 0)
+    {
+      thread_info *thread = find_thread_global_id (thread_id);
+
+      if (thread == nullptr || thread->state () == THREAD_EXITED) {
+	error (_("Variable object's thread no longer exists."));
+      }
+      switch_to_thread (thread);
+    }
+}
+
 /* Creates a list of the immediate children of a variable object;
    the return code is the number of such children or -1 on error.  */
 
 const std::vector<varobj *> &
 varobj_list_children (struct varobj *var, int *from, int *to)
 {
+  scoped_restore_current_thread restore_thread;
+  select_varobj_thread (var);
+
   var->dynamic->children_requested = true;
 
   if (varobj_is_dynamic_p (var))
@@ -1467,6 +1490,10 @@ varobj_update (struct varobj **varp, bool is_explicit)
       return result;
     }
 
+  /* Keep the variable's thread selected until lazy values and their
+     children have been fetched.  */
+  scoped_restore_current_thread restore_thread;
+
   if ((*varp)->root->rootvar == *varp)
     {
       varobj_update_result r (*varp);
@@ -1499,7 +1526,10 @@ varobj_update (struct varobj **varp, bool is_explicit)
       stack.push_back (std::move (r));
     }
   else
-    stack.emplace_back (*varp);
+    {
+      select_varobj_thread (*varp);
+      stack.emplace_back (*varp);
+    }
 
   /* Walk through the children, reconstructing them all.  */
   while (!stack.empty ())
@@ -1926,7 +1956,9 @@ check_scope (const struct varobj *var)
   return scope;
 }
 
-/* Helper function to value_of_root.  */
+/* Helper function to value_of_root.  Leave the variable's thread selected
+   so that varobj_update can fetch the returned value and its children before
+   restoring the previous thread.  */
 
 static struct value *
 value_of_root_1 (struct varobj **var_handle)
@@ -1939,8 +1971,6 @@ value_of_root_1 (struct varobj **var_handle)
   if (!is_root_p (var))
     /* Not a root var.  */
     return NULL;
-
-  scoped_restore_current_thread restore_thread;
 
   /* Determine whether the variable is still around.  */
   if (var->root->valid_block == NULL || var->root->floating)
